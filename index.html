@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DineSplit - Dinner & Bill Splitter</title>
+    <meta
+      name="description"
+      content="Interactive and responsive bill splitter for groups and dinners. Calculate exact penny-perfect shares, manage tips, track payments, and persist results across reloads."
+    />
+    <meta property="og:title" content="DineSplit - Dinner & Bill Splitter" />
+    <meta
+      property="og:description"
+      content="Interactive and responsive bill splitter for groups and dinners. Calculate exact penny-perfect shares, manage tips, track payments, and persist results across reloads."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <!-- App Container -->
+    <div class="app-layout">
+      <!-- Top Bar -->
+      <header class="top-bar">
+        <div class="brand-zone">
+          <div class="brand-icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              <line x1="12" y1="2" x2="12" y2="22"/>
+            </svg>
+          </div>
+          <span class="brand-name">DineSplit</span>
+        </div>
+
+        <div class="top-nav-middle">
+          <span class="top-context-badge">Group Dinner & Expense Settlement</span>
+        </div>
+
+        <div class="top-actions">
+          <button id="openHistoryBtn" class="btn-ghost history-nav-btn" type="button" title="View previously split bills">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <span>History</span>
+            <span id="historyCountBadge" class="history-badge">0</span>
+          </button>
+          <div class="currency-selector-wrapper">
+            <label for="currencySelect" class="sr-only">Currency</label>
+            <select id="currencySelect" class="currency-select" aria-label="Select currency">
+              <option value="$" selected>$ USD</option>
+              <option value="€">€ EUR</option>
+              <option value="£">£ GBP</option>
+              <option value="₹">₹ INR</option>
+              <option value="¥">¥ JPY</option>
+              <option value="C$">C$ CAD</option>
+              <option value="A$">A$ AUD</option>
+            </select>
+          </div>
+          <button id="resetAllBtn" class="btn-ghost" type="button" title="Start a fresh bill split">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+              <path d="M3 3v5h5"/>
+            </svg>
+            <span>New Bill</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Content Area -->
+      <main class="main-content">
+        <!-- Error Notification Banner -->
+        <div id="errorBanner" class="error-banner" role="alert" aria-live="assertive" style="display: none;">
+          <div class="error-banner-content">
+            <svg class="error-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <div class="error-text">
+              <strong id="errorTitle">Input Required</strong>
+              <p id="errorMessage">Please provide a valid bill amount and party size.</p>
+            </div>
+          </div>
+          <button id="dismissErrorBtn" class="btn-icon-subtle" type="button" aria-label="Dismiss error">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="split-grid">
+          <!-- Left Column: Input Form -->
+          <section class="card input-card" aria-labelledby="formTitle">
+            <div class="card-header">
+              <h1 id="formTitle" class="card-title">Dinner Bill Details</h1>
+              <p class="card-subtitle">Split your group check fast with exact cent precision</p>
+            </div>
+
+            <form id="billForm" class="bill-form" novalidate>
+              <!-- Occasion Name -->
+              <div class="form-group">
+                <label for="occasionInput" class="form-label">
+                  <span>Occasion / Event Name</span>
+                  <span class="label-hint">Optional</span>
+                </label>
+                <div class="input-with-icon">
+                  <span class="input-icon" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                    </svg>
+                  </span>
+                  <input
+                    type="text"
+                    id="occasionInput"
+                    name="occasion"
+                    class="form-input"
+                    placeholder="e.g. Dinner with Friends at Trattoria"
+                    maxlength="60"
+                    autocomplete="off"
+                  />
+                </div>
+                <!-- Quick Occasion Suggestions -->
+                <div class="occasion-presets" aria-label="Quick occasion presets">
+                  <button type="button" class="preset-tag" data-preset="Dinner with Friends">Dinner with Friends</button>
+                  <button type="button" class="preset-tag" data-preset="Pizza Night">Pizza Night</button>
+                  <button type="button" class="preset-tag" data-preset="Sushi & Drinks">Sushi &amp; Drinks</button>
+                  <button type="button" class="preset-tag" data-preset="Sunday Brunch">Sunday Brunch</button>
+                  <button type="button" class="preset-tag" data-preset="Birthday Dinner">Birthday Dinner</button>
+                  <button type="button" class="preset-tag" data-preset="Pub Tab">Pub Tab</button>
+                </div>
+              </div>
+
+              <!-- Bill Amount -->
+              <div class="form-group">
+                <label for="billAmountInput" class="form-label">
+                  <span>Total Bill Amount <strong class="required-star">*</strong></span>
+                  <span class="label-hint">Check subtotal or total</span>
+                </label>
+                <div class="currency-input-group">
+                  <span id="billCurrencySymbol" class="currency-prefix">$</span>
+                  <input
+                    type="number"
+                    id="billAmountInput"
+                    name="billAmount"
+                    class="form-input currency-input"
+                    placeholder="0.00"
+                    min="0.01"
+                    step="0.01"
+                    required
+                    inputmode="decimal"
+                    autocomplete="off"
+                  />
+                </div>
+              </div>
+
+              <!-- Number of People -->
+              <div class="form-group">
+                <label for="numPeopleInput" class="form-label">
+                  <span>Number of People <strong class="required-star">*</strong></span>
+                  <span class="label-hint">Friends splitting</span>
+                </label>
+                <div class="stepper-group">
+                  <button type="button" id="decrementPeopleBtn" class="stepper-btn" aria-label="Decrease number of people">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                  </button>
+                  <input
+                    type="number"
+                    id="numPeopleInput"
+                    name="numPeople"
+                    class="form-input stepper-input"
+                    value="3"
+                    min="1"
+                    max="100"
+                    step="1"
+                    required
+                    inputmode="numeric"
+                    autocomplete="off"
+                  />
+                  <button type="button" id="incrementPeopleBtn" class="stepper-btn" aria-label="Increase number of people">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <line x1="12" y1="5" x2="12" y2="19"/>
+                      <line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                  </button>
+                </div>
+                <!-- Quick Group Size Presets -->
+                <div class="party-presets" aria-label="Quick party size buttons">
+                  <span class="presets-caption">Quick size:</span>
+                  <button type="button" class="size-chip" data-size="2">2</button>
+                  <button type="button" class="size-chip active" data-size="3">3</button>
+                  <button type="button" class="size-chip" data-size="4">4</button>
+                  <button type="button" class="size-chip" data-size="5">5</button>
+                  <button type="button" class="size-chip" data-size="6">6</button>
+                  <button type="button" class="size-chip" data-size="8">8</button>
+                  <button type="button" class="size-chip" data-size="10">10</button>
+                </div>
+              </div>
+
+              <!-- Tip / Gratuity -->
+              <div class="form-group">
+                <div class="tip-header-row">
+                  <label class="form-label" id="tipOptionsLabel">
+                    <span>Tip / Gratuity</span>
+                  </label>
+                  <span id="tipCalculatedAmount" class="tip-calc-badge">+ $0.00 (0%)</span>
+                </div>
+                <div class="tip-selector-grid" role="radiogroup" aria-labelledby="tipOptionsLabel">
+                  <button type="button" class="tip-btn" data-tip="0">0%</button>
+                  <button type="button" class="tip-btn" data-tip="10">10%</button>
+                  <button type="button" class="tip-btn active" data-tip="15">15%</button>
+                  <button type="button" class="tip-btn" data-tip="18">18%</button>
+                  <button type="button" class="tip-btn" data-tip="20">20%</button>
+                  <button type="button" class="tip-btn" data-tip="custom">Custom</button>
+                </div>
+                <div id="customTipContainer" class="custom-tip-container" style="display: none;">
+                  <div class="custom-tip-toggle">
+                    <button type="button" id="customTipTypePercent" class="sub-toggle-btn active">% Percent</button>
+                    <button type="button" id="customTipTypeFixed" class="sub-toggle-btn">Fixed Amount</button>
+                  </div>
+                  <div class="custom-tip-input-wrapper">
+                    <input
+                      type="number"
+                      id="customTipValue"
+                      class="form-input"
+                      placeholder="e.g. 12"
+                      min="0"
+                      step="any"
+                      inputmode="decimal"
+                    />
+                    <span id="customTipSuffix" class="input-suffix">%</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Calculate Action Button -->
+              <div class="form-actions">
+                <button type="submit" id="calculateSplitBtn" class="btn-primary">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2"/>
+                    <line x1="6" y1="8" x2="6" y2="8"/>
+                    <line x1="10" y1="8" x2="18" y2="8"/>
+                    <line x1="6" y1="12" x2="6" y2="12"/>
+                    <line x1="10" y1="12" x2="18" y2="12"/>
+                    <line x1="6" y1="16" x2="6" y2="16"/>
+                    <line x1="10" y1="16" x2="14" y2="16"/>
+                  </svg>
+                  <span>Split the Bill</span>
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <!-- Right Column: Results & Share Breakdown -->
+          <section class="card results-card" id="resultsSection" aria-live="polite">
+            <!-- Empty state when not calculated or invalid -->
+            <div id="emptyResultsState" class="empty-state">
+              <div class="empty-illustration" aria-hidden="true">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10 9 9 9 8 9"/>
+                </svg>
+              </div>
+              <h2 class="empty-title">Ready to Settle Up</h2>
+              <p class="empty-desc">
+                Enter your total dinner bill and group size, then click <strong>"Split the Bill"</strong> to view each person's exact share.
+              </p>
+              <div class="empty-hints">
+                <span>✓ Penny-perfect penny rounding</span>
+                <span>✓ Custom friend names</span>
+                <span>✓ Group chat copy summary</span>
+              </div>
+            </div>
+
+            <!-- Active Results Panel (rendered when valid) -->
+            <div id="activeResultsState" class="active-results" style="display: none;">
+              <!-- Occasion Header & Meta -->
+              <div class="results-header">
+                <div>
+                  <div class="results-kicker" id="resKicker">Occasion Breakdown</div>
+                  <h2 class="results-occasion-title" id="resOccasionTitle">Dinner with Friends</h2>
+                </div>
+                <div class="results-actions-top">
+                  <button id="copySummaryBtn" class="btn-secondary" type="button" title="Copy full split summary for WhatsApp or messages">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                    </svg>
+                    <span>Copy Summary</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Main Hero Metric Card -->
+              <div class="hero-metric-box">
+                <div class="metric-main">
+                  <span class="metric-caption">Each Person Pays</span>
+                  <div class="metric-amount-row">
+                    <span class="metric-currency" id="resMetricCurrency">$</span>
+                    <span class="metric-value" id="resPerPersonValue">0.00</span>
+                    <span class="metric-unit" id="resPerPersonQualifier">/ person</span>
+                  </div>
+                </div>
+
+                <div class="metric-stats-grid">
+                  <div class="stat-col">
+                    <span class="stat-label">Subtotal</span>
+                    <span class="stat-value" id="resStatSubtotal">$0.00</span>
+                  </div>
+                  <div class="stat-col">
+                    <span class="stat-label">Tip (<span id="resStatTipPercent">15%</span>)</span>
+                    <span class="stat-value" id="resStatTipAmount">$0.00</span>
+                  </div>
+                  <div class="stat-col">
+                    <span class="stat-label">Total Bill</span>
+                    <span class="stat-value highlight" id="resStatTotal">$0.00</span>
+                  </div>
+                  <div class="stat-col">
+                    <span class="stat-label">Party Size</span>
+                    <span class="stat-value" id="resStatPeople">3 people</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Exact Sum Verification Callout -->
+              <div class="exact-match-callout" id="exactMatchCallout">
+                <div class="callout-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                  </svg>
+                </div>
+                <div class="callout-body">
+                  <div class="callout-headline">
+                    <strong>Exact Match:</strong> Shares sum up to <span id="resSharesSum">$0.00</span> (<span id="resVerificationStatus">100% matched to total bill</span>)
+                  </div>
+                  <div class="callout-detail" id="resRoundingExplanation">
+                    Every cent accounted for. Zero leftover or deficit.
+                  </div>
+                </div>
+              </div>
+
+              <!-- Settlement Progress -->
+              <div class="settlement-progress-block">
+                <div class="progress-labels">
+                  <span class="progress-title">Settlement Progress</span>
+                  <span class="progress-count" id="settledProgressCount">0 of 3 collected</span>
+                </div>
+                <div class="progress-bar-track">
+                  <div id="settledProgressBar" class="progress-bar-fill" style="width: 0%;"></div>
+                </div>
+              </div>
+
+              <!-- Person-by-Person Share List -->
+              <div class="person-shares-section">
+                <div class="shares-section-header">
+                  <h3 class="shares-section-title">Individual Shares Breakdown</h3>
+                  <span class="shares-section-hint">Click any name to customize</span>
+                </div>
+
+                <div id="personListContainer" class="person-cards-list">
+                  <!-- Dynamically rendered person cards -->
+                </div>
+              </div>
+
+              <!-- Quick Helper Footer Actions -->
+              <div class="results-footer-bar">
+                <span class="footer-saved-badge">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                    <polyline points="17 21 17 13 7 13 7 21"/>
+                    <polyline points="7 3 7 8 15 8"/>
+                  </svg>
+                  <span>Saved locally &amp; persists on reload</span>
+                </span>
+                <div class="footer-actions-group">
+                  <button type="button" id="viewHistoryFooterBtn" class="btn-ghost-sm" title="View past bills">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    <span>History</span>
+                  </button>
+                  <button type="button" id="printReceiptBtn" class="btn-ghost-sm" title="Print a clean receipt copy">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="6 9 6 2 18 2 18 9"/>
+                      <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                      <rect x="6" y="14" width="12" height="8"/>
+                    </svg>
+                    <span>Print Receipt</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Dedicated Printable Receipt (Optimized for Printer / PDF) -->
+              <div id="printReceiptSection" class="print-receipt-section" aria-hidden="true">
+                <div class="print-receipt-header">
+                  <div class="print-receipt-brand">DineSplit · Dining Settlement</div>
+                  <div class="print-receipt-title" id="printReceiptTitle">Dinner with Friends</div>
+                  <div class="print-receipt-meta">
+                    <span id="printReceiptDate">Date: 10/4/2026</span>
+                    <span>·</span>
+                    <span id="printReceiptParty">Party: 3 people</span>
+                  </div>
+                </div>
+
+                <div class="print-receipt-divider"></div>
+
+                <table class="print-receipt-table">
+                  <thead>
+                    <tr>
+                      <th class="text-left">Person</th>
+                      <th class="text-right">Base</th>
+                      <th class="text-right">Tip</th>
+                      <th class="text-right">Total Share</th>
+                      <th class="text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="printReceiptTableBody">
+                    <!-- Populated dynamically -->
+                  </tbody>
+                </table>
+
+                <div class="print-receipt-divider"></div>
+
+                <div class="print-receipt-totals">
+                  <div class="print-row">
+                    <span>Check Subtotal:</span>
+                    <span id="printRowSubtotal">$0.00</span>
+                  </div>
+                  <div class="print-row">
+                    <span>Tip (<span id="printRowTipPercent">15%</span>):</span>
+                    <span id="printRowTip">$0.00</span>
+                  </div>
+                  <div class="print-row print-row-total">
+                    <strong>Total Bill:</strong>
+                    <strong id="printRowTotal">$0.00</strong>
+                  </div>
+                  <div class="print-row print-row-exact">
+                    <span>Sum of All Shares:</span>
+                    <span id="printRowSharesSum">$0.00</span>
+                  </div>
+                </div>
+
+                <div class="print-receipt-footer">
+                  <p id="printReceiptVerification">✓ Exact penny split verified. 100% matched to total bill.</p>
+                  <p class="print-receipt-thanks">Thank you for dining! Settle up easily.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <!-- Toast Feedback (for copy alerts, etc.) -->
+      <div id="toastNotification" class="toast" role="status" aria-live="polite" style="display: none;">
+        <span id="toastMessage">Summary copied to clipboard!</span>
+      </div>
+
+      <!-- History Overlay Backdrop -->
+      <div id="historyOverlay" class="drawer-overlay" style="display: none;"></div>
+
+      <!-- Bill History Drawer (Slide-Over Panel) -->
+      <aside id="historyDrawer" class="history-drawer" aria-labelledby="historyTitle" aria-hidden="true">
+        <div class="drawer-header">
+          <div>
+            <h2 id="historyTitle" class="drawer-title">Bill History</h2>
+            <p class="drawer-subtitle">Previously calculated &amp; saved splits</p>
+          </div>
+          <div class="drawer-header-actions">
+            <button id="clearAllHistoryBtn" class="btn-ghost-danger" type="button" title="Delete all previous bills">
+              Clear All
+            </button>
+            <button id="closeHistoryBtn" class="btn-icon-subtle" type="button" aria-label="Close history drawer">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="drawer-content">
+          <div id="historyListContainer" class="history-list">
+            <!-- Dynamically populated or empty state -->
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Script File -->
+    <script src="./script.js"></script>
+  </body>
+</html>

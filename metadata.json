@@ -1,0 +1,7 @@
+{
+  "name": "DineSplit - Dinner & Bill Splitter",
+  "description": "Interactive and responsive bill splitter for groups and dinners. Calculate exact penny-perfect shares, manage tips, track payments, and persist results across reloads.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
